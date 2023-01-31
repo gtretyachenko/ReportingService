@@ -74,7 +74,7 @@ def execute_read_query(connection, query):
         print(f"The error '{e}' occurred")
 
 # Функия отправки письма имэйл
-def send_email(to_address, to_copy, shopping_centre, path_to_files_reports):
+def send_email(to_address, to_copy, shopping_centre, path_to_files_reports, f2):
     # _получение ключей из конфига для рассылки
     str_from = cfg.get("smtp", 'from_addr')
     host = cfg.get("smtp", "server")
@@ -84,71 +84,65 @@ def send_email(to_address, to_copy, shopping_centre, path_to_files_reports):
     msg = MIMEMultipart('related')
 
     # _создание ключевых заголовков для основного контейнера (письмо)
-    if 'продаж товваров' in os.path.abspath(path_to_files_reports[0]):
-        msg.add_header('Subject', f'Еженедельные отчеты: {shopping_centre}.')
-    # if 'выполнения заказов' in os.path.abspath(path_to_files_reports[0]):
-    #     msg.add_header('Subject', f'Контроль заказов на перемещение: {shopping_centre}.')
-    #     to_copy = to_copy[0]
-    #     to_copy.add('timakova@noone.ru')
-    #     to_copy.add('b.yurchenko@noone.ru')
-    #     to_copy.add('a.pavlenko@noone.ru')
-    #     to_copy.add('g.tretyachenko@noone.ru')
+    # if 'продаж товваров' in os.path.abspath(path_to_files_reports[0]):
+    #     msg.add_header('Subject', f'Еженедельные отчеты: {shopping_centre}.')
+    if 'выполнения заказов' in os.path.abspath(path_to_files_reports[0]):
+        msg.add_header('Subject', f'Контроль заказов на перемещение: {shopping_centre}.')
     msg['From'] = str_from
     msg['To'] = to_address
     # _создание части письма с типом МультиПарт/Альтернатив для вложения в основной контейнер (в письмо)
     msg_part_alternative = MIMEMultipart('alternative')
     msg.attach(msg_part_alternative)
-    if 'продаж товваров' in os.path.abspath(path_to_files_reports[0]):
-        # _подготовка тела html
-        html_body = """
-                <html>   
-                  <head></head>
-                  <body>
-                        <p>Добрый день!</p>
-                        <p>Сформированы отчеты по итогам работы магазина на прошлой неделе.</p>
-                        <p>При возникновении вопросов к отчетности, обращайтесь к вашему территориальному менеджеру.</p>
-                        <br>
-                        <br>
-                        <img src="cid:{cid}"/>
-                        <p><tt><b>Автоматическое формирование и рассылка отчетов</b></tt></p>               
-                  </body>
-                </html>
-            """.format(cid='image1')
-    # if 'выполнения заказов' in os.path.abspath(path_to_files_reports[0]):
-    #     # _подготовка тела html для рассылки контроля выполнения заказов
-    #     if not f2:
-    #         html_body = """
-    #                 <html>
-    #                   <head></head>
-    #                   <body>
-    #                         <p>Добрый день!</p>
-    #                         <p>Напоминаем, у вас есть не отработанные заказы на перемещение (см. файл во вложении).</p>
-    #                         <p>Все товары в заказах, которые есть на остатке маг., должны быть отгружены и закрыты док. перемещений не позднее 7 дней со дня создания заказа на перемещение.</p>
-    #                         <br>
-    #                         <br>
-    #                         <img src="cid:{cid}"/>
-    #                         <p><tt><b>Автоматическое формирование и рассылка отчетов</b></tt></p>
-    #                   </body>
-    #                 </html>
-    #             """.format(cid='image1')
-    #     else:
-    #         to_copy.add('m.biryukova@noone.ru')
-    #         # _подготовка тела html для рассылки контроля выполнения заказов (>7)
-    #         html_body = """
-    #                 <html>
-    #                   <head></head>
-    #                   <body>
-    #                         <p>Добрый день!</p>
-    #                         <p>Напоминаем, у вас есть не отработанные заказы на перемещение (см. файл во вложении).</p>
-    #                         <p>Все товары в заказах, которые есть на остатке маг., должны быть отгружены и закрыты док. перемещений не позднее 7 дней со дня создания заказа на перемещение.</p>
-    #                         <p>По файлу «более 7 дней», прошу как можно быстрее отгрузить данный товар и в ответном письме дать пояснения-причины не подготовки товара в срок.</p>
-    #                         <br>
-    #                         <br>
-    #                         <img src="cid:{cid}"/>
-    #                         <p><tt><b>Автоматическое формирование и рассылка отчетов</b></tt></p>
-    #                   </body>
-    #                 </html>
-    #             """.format(cid='image1')
+    # if 'продаж товваров' in os.path.abspath(path_to_files_reports[0]):
+    #     # _подготовка тела html
+    #     html_body = """
+    #             <html>
+    #               <head></head>
+    #               <body>
+    #                     <p>Добрый день!</p>
+    #                     <p>Сформированы отчеты по итогам работы магазина на прошлой неделе.</p>
+    #                     <p>При возникновении вопросов к отчетности, обращайтесь к вашему территориальному менеджеру.</p>
+    #                     <br>
+    #                     <br>
+    #                     <img src="cid:{cid}"/>
+    #                     <p><tt><b>Автоматическое формирование и рассылка отчетов</b></tt></p>
+    #               </body>
+    #             </html>
+    #         """.format(cid='image1')
+    if 'выполнения заказов' in os.path.abspath(path_to_files_reports[0]):
+        # _подготовка тела html для рассылки контроля выполнения заказов
+        if not f2:
+            html_body = """
+                    <html>   
+                      <head></head>
+                      <body>
+                            <p>Добрый день!</p>
+                            <p>Напоминаем, у вас есть не отработанные заказы на перемещение (см. файл во вложении).</p>
+                            <p>Все товары в заказах, которые есть на остатке маг., должны быть отгружены и закрыты док. перемещений не позднее 7 дней со дня создания заказа на перемещение.</p>
+                            <br>
+                            <br>
+                            <img src="cid:{cid}"/>
+                            <p><tt><b>Автоматическое формирование и рассылка отчетов</b></tt></p>               
+                      </body>
+                    </html>
+                """.format(cid='image1')
+        else:
+            # _подготовка тела html для рассылки контроля выполнения заказов (>7)
+            html_body = """
+                    <html>   
+                      <head></head>
+                      <body>
+                            <p>Добрый день!</p>
+                            <p>Напоминаем, у вас есть не отработанные заказы на перемещение (см. файл во вложении).</p>
+                            <p>Все товары в заказах, которые есть на остатке маг., должны быть отгружены и закрыты док. перемещений не позднее 7 дней со дня создания заказа на перемещение.</p>
+                            <p>По файлу «более 7 дней», прошу как можно быстрее отгрузить данный товар и в ответном письме дать пояснения-причины не подготовки товара в срок.</p>
+                            <br>
+                            <br>
+                            <img src="cid:{cid}"/>
+                            <p><tt><b>Автоматическое формирование и рассылка отчетов</b></tt></p>               
+                      </body>
+                    </html>
+                """.format(cid='image1')
 
     msg['Cc'] = to_copy
     # _создание части письма для вложения в часть письма MIMEMultipart('alternative') вложенного в осн. контейнер (письмо)
@@ -167,23 +161,9 @@ def send_email(to_address, to_copy, shopping_centre, path_to_files_reports):
     for path_to_file in path_to_files_reports:
         i += 1
         # _чтение фала в часть письма (Base) для размещения во вложениии письма (добавление в основной контейнер)
-        if 'pdf' in os.path.basename(path_to_file):
-            with open(path_to_file, 'rb') as fp:
-                attach_file = MIMEBase('application', 'pdf', filename=os.path.basename(path_to_file))
-                # _создание ключевого заголовка через класс заголовки для его декодирования с последующим указанием размещения в письме
-                h = Header(os.path.basename(path_to_file), 'utf-8').encode()
-                attach_file.add_header('Content-Disposition', 'attachment', filename=h)
-                # _создание заголовков для индексации вложения в письмо
-                attach_file.add_header('X-Attachment-Id', f'{i}')
-                attach_file.add_header('Content-ID', f'<{i}>')
-                # _загрузка файла в контейнер - часть письма (Base)
-                attach_file.set_payload(fp.read())
-                # _декодирование и добовление файла
-                encoders.encode_base64(attach_file)
-                msg.attach(attach_file)
-        # if 'xlsx' in os.path.basename(path_to_file):
+        # if 'pdf' in os.path.basename(path_to_file):
         #     with open(path_to_file, 'rb') as fp:
-        #         attach_file = MIMEBase('application', 'xlsx', filename=os.path.basename(path_to_file))
+        #         attach_file = MIMEBase('application', 'pdf', filename=os.path.basename(path_to_file))
         #         # _создание ключевого заголовка через класс заголовки для его декодирования с последующим указанием размещения в письме
         #         h = Header(os.path.basename(path_to_file), 'utf-8').encode()
         #         attach_file.add_header('Content-Disposition', 'attachment', filename=h)
@@ -195,6 +175,20 @@ def send_email(to_address, to_copy, shopping_centre, path_to_files_reports):
         #         # _декодирование и добовление файла
         #         encoders.encode_base64(attach_file)
         #         msg.attach(attach_file)
+        if 'xlsx' in os.path.basename(path_to_file):
+            with open(path_to_file, 'rb') as fp:
+                attach_file = MIMEBase('application', 'xlsx', filename=os.path.basename(path_to_file))
+                # _создание ключевого заголовка через класс заголовки для его декодирования с последующим указанием размещения в письме
+                h = Header(os.path.basename(path_to_file), 'utf-8').encode()
+                attach_file.add_header('Content-Disposition', 'attachment', filename=h)
+                # _создание заголовков для индексации вложения в письмо
+                attach_file.add_header('X-Attachment-Id', f'{i}')
+                attach_file.add_header('Content-ID', f'<{i}>')
+                # _загрузка файла в контейнер - часть письма (Base)
+                attach_file.set_payload(fp.read())
+                # _декодирование и добовление файла
+                encoders.encode_base64(attach_file)
+                msg.attach(attach_file)
 
     # Создание экземпляра почтового сервера и отправка письма
     server = smtplib.SMTP(host)
@@ -204,20 +198,21 @@ def send_email(to_address, to_copy, shopping_centre, path_to_files_reports):
     server.quit()
     print('Отправлено!')
 
+
 def send_emai_report(subject, to_addr, msg_txt, cfg, sended_count, data_frame=None):
     """
     Отправить имэил с результатами рассылки
     """
     host = cfg.get("smtp", "server")
     pas = cfg.get("smtp", "pass")
-    from_addr = cfg.get("smtp", 'from_addr')
+    from_addr = cfg.get("smtp", 'from')
     msg_txt = ['<p>' + row + '</p>'for row in msg_txt]
 
     html = f"""\
     <html>   
       <head></head>
       <body>
-            <p>Еженедельные отчеты для розницы успешно отправлены.</p>
+            <p>Контроль заказов на перемещение для розницы успешно отправлены.</p>
             <p>Всего маг. {len(set(email_list))}.</p>
             <p>Отправлено писем {sended_count}.</p>
             <p>Подробно: </p>
@@ -268,6 +263,7 @@ def send_emai_report(subject, to_addr, msg_txt, cfg, sended_count, data_frame=No
     server.sendmail(msg['From'], [msg['To']], msg.as_string())
     server.quit()
 
+
 # Начало процедуры - подключение к ini конфигу
 base_path = os.path.dirname(os.path.abspath(__file__))
 config_path = os.path.join(base_path, "config.ini")
@@ -278,13 +274,13 @@ else:
     print("Config not found! Exiting!")
     sys.exit(1)
 
-folder_rating_goods_for_stores = Path(
-    'C:/Общая/_Отчеты/!Еженедельные рассылки/Рейтинг продаж товваров за прошлую неделю (для маг.)/OutBound')
-folder_anti_rating_goods_for_stores = Path(
-    'C:/Общая/_Отчеты/!Еженедельные рассылки/Антирейтинг продаж товаров за прошлую неделю (для маг.)/OutBound')
+# folder_rating_goods_for_stores = Path(
+#     'C:/Общая/_Отчеты/!Еженедельные рассылки/Рейтинг продаж товваров за прошлую неделю (для маг.)/OutBound')
+# folder_anti_rating_goods_for_stores = Path(
+#     'C:/Общая/_Отчеты/!Еженедельные рассылки/Антирейтинг продаж товаров за прошлую неделю (для маг.)/OutBound')
 
-# folder_control_stock_cmv_for_stores = Path(
-#     'C:/Общая/_Отчеты/!Еженедельные рассылки/Контроль выполнения заказов на перемещение (для маг.)/OutBound')
+folder_control_complete_transfer_orders_for_stores = Path(
+    'C:/Общая/_Отчеты/!Еженедельные рассылки/Контроль выполнения заказов на перемещение (для маг.)/OutBound')
 
 # Получение списка магазинов и контактов почты для рассылки отчетов из MySQL
 connection = create_connection(cfg)
@@ -315,32 +311,40 @@ for email in email_list:
     path_to_files_reports = []
     # магазин
     to_address = email
-    # тереториал, мерчи и сотрудники офиса
-    to_copy = [row[2] + ', ' + row[3] + ', ' + row[4] for row in data_frame if row[1] == email]
-    to_copy = set(to_copy)
-    to_copy = ''.join(to_copy).replace(';', ',')
+    # териториальный
+    to_copy = [row[2] for row in data_frame if row[1] == email]
+    # дополнительно
+    to_copy.append('timakova@noone.ru')
+    to_copy.append('b.yurchenko@noone.ru')
+    to_copy.append('e.adamenko@noone.ru')
+    to_copy.append('a.pavlenko@noone.ru')
+    to_copy.append('g.tretyachenko@noone.ru')
+
+    to_copy = ','.join(to_copy).replace(';', ',')
     names_stores = set(row[0] for row in data_frame if row[1] == email)
     shopping_centre = set(row[5] for row in data_frame if row[1] == email)
-    report_list_1 = os.listdir(folder_rating_goods_for_stores)
-    for rep in report_list_1:
-        if rep.replace(' (товары-лидеры).pdf', '') in names_stores:
-            if os.path.getmtime(f'{folder_rating_goods_for_stores}/{rep}') > dt_start_day:
-                path_to_files_reports.append(folder_rating_goods_for_stores.joinpath(rep))
-    report_list_2 = os.listdir(folder_anti_rating_goods_for_stores)
-    for rep in report_list_2:
-        if rep.replace(' (товары-аутсайдеры).pdf', '') in names_stores:
-            if os.path.getmtime(f'{folder_anti_rating_goods_for_stores}/{rep}') > dt_start_day:
-                path_to_files_reports.append(folder_anti_rating_goods_for_stores.joinpath(rep))
-    # f2 = False  # флажок наличия файла-контроля нижнего склада для магазина (сброс)
-    # report_list_3 = os.listdir(folder_control_stock_cmv_for_stores)
-    # for rep in report_list_3:
-    #     if rep.replace(' (заказы на перемещение).xlsx', '') in names_stores:
-    #         if os.path.getmtime(f'{folder_control_stock_cmv_for_stores}/{rep}') > dt_start_day:
-    #             path_to_files_reports.append(folder_control_stock_cmv_for_stores.joinpath(rep))
-    #     if rep.replace(' (заказы на перемещение более 7 дн.).xlsx', '') in names_stores:
-    #         if os.path.getmtime(f'{folder_control_stock_cmv_for_stores}/{rep}') > dt_start_day:
-    #             path_to_files_reports.append(folder_control_stock_cmv_for_stores.joinpath(rep))
-    #             f2 = True  # флажок наличия файла-контроля нижнего склада для магазина (установка)
+
+    # report_list_1 = os.listdir(folder_rating_goods_for_stores)
+    # for rep in report_list_1:
+    #     if rep.replace(' (товары-лидеры).pdf', '') in names_stores:
+    #         if os.path.getmtime(f'{folder_rating_goods_for_stores}/{rep}') > dt_start_day:
+    #             path_to_files_reports.append(folder_rating_goods_for_stores.joinpath(rep))
+    # report_list_2 = os.listdir(folder_anti_rating_goods_for_stores)
+    # for rep in report_list_2:
+    #     if rep.replace(' (товары-аутсайдеры).pdf', '') in names_stores:
+    #         if os.path.getmtime(f'{folder_anti_rating_goods_for_stores}/{rep}') > dt_start_day:
+    #             path_to_files_reports.append(folder_anti_rating_goods_for_stores.joinpath(rep))
+
+    f2 = False  # флажок наличия файла-контроля (сброс)
+    report_list_3 = os.listdir(folder_control_complete_transfer_orders_for_stores)
+    for rep in report_list_3:
+        if rep.replace(' (заказы на перемещение).xlsx', '') in names_stores:
+            if os.path.getmtime(f'{folder_control_complete_transfer_orders_for_stores}/{rep}') > dt_start_day:
+                path_to_files_reports.append(folder_control_complete_transfer_orders_for_stores.joinpath(rep))
+        if rep.replace(' (заказы на перемещение более 7 дн.).xlsx', '') in names_stores:
+            if os.path.getmtime(f'{folder_control_complete_transfer_orders_for_stores}/{rep}') > dt_start_day:
+                path_to_files_reports.append(folder_control_complete_transfer_orders_for_stores.joinpath(rep))
+                f2 = True  # флажок наличия файла-контроля (установка)
 
     # to_address = 'g.tretyachenko@noone.ru'
     # to_copy = 'g.tretyachenko@noone.ru'
@@ -349,7 +353,7 @@ for email in email_list:
         print(f'----------------{i}-----------------------------')
         msg_txt += f'----------------{i}-----------------------------' + '\n'
         # Вызываем функцию отправки письма имейла
-        send_email(to_address, to_copy, shopping_centre, path_to_files_reports)
+        send_email(to_address, to_copy, shopping_centre, path_to_files_reports, f2)
         print(f'Кому: {to_address}')
         msg_txt += f'Кому: {to_address}' + '\n'
         print(f'Копия: {to_copy}')
@@ -362,6 +366,6 @@ for email in email_list:
 
     # break
 
-subject = 'Еженедельная отчетность в розницу'
-to_addr = 'g.tretyachenko@noone.ru' #; m.saakyan@noone.ru'
+subject = 'Контроль сроков заказов на перемещение'
+to_addr = 'g.tretyachenko@noone.ru; m.saakyan@noone.ru'
 send_emai_report(subject, to_addr, msg_txt.split('\n'), cfg, i)

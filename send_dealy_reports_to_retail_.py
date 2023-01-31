@@ -9,6 +9,8 @@ from datetime import datetime
 # Импорт почтового сервера
 import smtplib
 # Импорт библиотек конструктора электронных писем
+from email import message
+# Импорт библиотек конструктора электронных писем
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
@@ -146,6 +148,74 @@ def send_email(to_address, to_copy, mail_subject, path_to_attach_files, main_typ
     print('Отправлено!')
 
 
+
+
+def send_emai_report(subject, to_addr, msg_txt, cfg, sended_count, data_frame=None):
+    """
+    Отправить имэил с результатами рассылки
+    """
+    host = cfg.get("smtp", "server")
+    pas = cfg.get("smtp", "pass")
+    from_addr = cfg.get("smtp", 'from_addr')
+    msg_txt = ['<p>' + row + '</p>'for row in msg_txt]
+
+    html = f"""\
+    <html>   
+      <head></head>
+      <body>
+            <p>Ежедневные отчеты для розницы успешно отправлены.</p>
+            <p>Всего маг. {len(set(email_list))}.</p>
+            <p>Отправлено писем {sended_count}.</p>
+            <p>Подробно: </p>
+            {''.join(msg_txt)}
+      </body>
+    </html>
+    """
+    result = ''
+    if data_frame:
+        for ii in data_frame:
+            x = 0
+            for i in ii:
+                result += (f'<tr><td>{i}</td>' if x == 0 else f'<td>{i}</td>')
+                x += 1
+        result += f'</tr>'
+
+        html = f"""\
+        <html>   
+          <head></head>
+          <body>
+                <tt>{msg_txt}</tt>
+                <br>
+                <table border="1">
+                    <tr>
+                        <th>Table Name</th>
+                        <th>Edge date slice</th>
+                        <th>Count row</th>
+                        <th>Count date slice</th>
+                    </tr>
+                    {result}
+                </table>
+          </body>
+        </html>
+        """
+
+    msg_ = message.Message()
+    msg_['Subject'] = subject
+    msg_['From'] = from_addr
+    msg_['To'] = to_addr
+    password = pas
+
+    msg_.add_header('Content-Type', 'text/html')
+    msg_.set_payload(html)
+    server = smtplib.SMTP(host)
+    server.starttls()
+
+    server.login(msg_['From'], password)
+    server.sendmail(msg_['From'], [msg_['To']], msg_.as_string().encode())
+    server.quit()
+
+
+
 # Начало процедуры - подключение к ini конфигу
 base_path = os.path.dirname(os.path.abspath(__file__))
 config_path = os.path.join(base_path, "config.ini")
@@ -161,6 +231,7 @@ folder_rep_control_down_stores = Path(
 
 folder_rep_control_shopping_rooms = Path(
     'C:/Общая/_Отчеты/!Ежедневные рассылки/Контроль витрины торгового зала (отгружено за вчера)/OutBound')
+
 
 # Получение списка магазинов и контактов почты для рассылки отчетов
 connection = create_connection(cfg)
@@ -186,9 +257,15 @@ email_list.sort()
 # Готовимся и рассылаем отчеты
 i = 0
 dt_start_day = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+msg_txt = ''
+tt = 0
 for email in email_list:
+    tt += 1
     path_to_files_reports = []
+    # магазин
     to_address = email
+    # дополнительно
+    to_copy = 'g.tretyachenko@noone.ru'
     names_stores = set(row[0] for row in data_frame if row[1] == email)
     shopping_centre = set(row[5] for row in data_frame if row[1] == email)
 
@@ -204,18 +281,36 @@ for email in email_list:
             if os.path.getmtime(f'{folder_rep_control_down_stores}/{rep}') > dt_start_day:
                 f2 = True # флажок наличия файла-контроля нижнего склада для магазина (установка)
                 path_to_files_reports.append(folder_rep_control_down_stores.joinpath(rep))
-    to_copy = 'g.tretyachenko@noone.ru'
+
     if f2: # установить в копию письма адресатов при наличии файла-контроля нижнего склада
+        # тереториал и сотрудники офиса
         to_copy = [row[2] + ', ' + row[4] for row in data_frame if row[1] == email]
         to_copy = set(to_copy)
         to_copy = ''.join(to_copy).replace(';', ',')
 
+    # to_address = 'g.tretyachenko@noone.ru'
+    # to_copy = 'g.tretyachenko@noone.ru'
     if len(path_to_files_reports) > 0:
         i += 1
         print(f'----------------{i}-----------------------------')
+        msg_txt += f'----------------{i}-----------------------------' + '\n'
+        # Вызываем функцию отправки письма имейла
         send_email(to_address, to_copy, shopping_centre, path_to_files_reports, 'application', 'xlsx')
         print(f'Кому: {to_address}')
+        msg_txt += f'Кому: {to_address}' + '\n'
         print(f'Копия: {to_copy}')
+        msg_txt += f'Копия: {to_copy}' + '\n'
         print(f'ТЦ: {shopping_centre}')
+        msg_txt += f'ТЦ: {shopping_centre}' + '\n'
         for att in path_to_files_reports:
             print(f'Вложение:', att)
+            msg_txt += f'Вложение: ' + str(att) + '\n'
+    # break
+
+# with open("log.txt", "w") as file:
+#     file.write(msg_txt)
+
+subject = 'Ежедневная отчетность в розницу'
+to_addr = 'g.tretyachenko@noone.ru' #; m.saakyan@noone.ru'
+send_emai_report(subject, to_addr, msg_txt.split('\n'), cfg, i)
+
